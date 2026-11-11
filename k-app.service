@@ -1,0 +1,41 @@
+{
+    "Table": {
+        "AttributeDefinitions": [
+            {
+                "AttributeName": "RecordId",
+                "AttributeType": "S"
+            }
+        ],
+        "TableName": "FileUploads",
+        "KeySchema": [
+            {
+                "AttributeName": "RecordId",
+                "KeyType": "HASH"
+            }
+        ],
+        "TableStatus": "ACTIVE",
+        "CreationDateTime": "2026-11-11T02:08:04.214000+00:00",
+        "ProvisionedThroughput": {
+            "NumberOfDecreasesToday": 0,
+            "ReadCapacityUnits": 0,
+            "WriteCapacityUnits": 0
+        },
+        "TableSizeBytes": 0,
+        "ItemCount": 0,
+        "TableArn": "arn:aws:dynamodb:ap-southeast-2:949926373984:table/FileUploads",
+        "TableId": "5713d572-0532-48db-8726-0dbe3f6a6910",
+        "BillingModeSummary": {
+            "BillingMode": "PAY_PER_REQUEST",
+            "LastUpdateToPayPerRequestDateTime": "2026-11-11T02:08:04.214000+00:00"
+        },
+        "TableClassSummary": {
+            "TableClass": "STANDARD"
+        },
+        "DeletionProtectionEnabled": false,
+        "WarmThroughput": {
+            "ReadUnitsPerSecond": 12000,
+            "WriteUnitsPerSecond": 4000,
+            "Status": "ACTIVE"
+        }
+    }
+}

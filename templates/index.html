@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AWS File Upload Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --aws-orange:  #FF9900;
+      --aws-dark:    #232F3E;
+      --aws-blue:    #1A73E8;
+      --aws-light:   #F0F4FF;
+      --success:     #00B386;
+      --error:       #E53935;
+      --text:        #1a1a2e;
+      --muted:       #6b7280;
+      --border:      #e2e8f0;
+      --card-bg:     #ffffff;
+      --radius:      16px;
+    }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Animated mesh background */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(255,153,0,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 80%, rgba(26,115,232,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 50% 50%, rgba(0,179,134,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Floating grid lines */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page-wrap {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 540px;
+    }
+
+    /* ── Brand Header ── */
+    .brand {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .brand-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,153,0,0.12);
+      border: 1px solid rgba(255,153,0,0.3);
+      border-radius: 999px;
+      padding: 6px 18px;
+      margin-bottom: 16px;
+    }
+    .brand-badge .dot {
+      width: 8px; height: 8px;
+      background: var(--aws-orange);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:0.5; transform:scale(1.4); }
+    }
+    .brand-badge span { font-size: 12px; font-weight: 600; color: var(--aws-orange); letter-spacing: 0.08em; text-transform: uppercase; }
+    .brand h1 {
+      font-size: clamp(26px, 5vw, 34px);
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+    .brand h1 em { color: var(--aws-orange); font-style: normal; }
+    .brand p { margin-top: 10px; font-size: 14px; color: rgba(255,255,255,0.5); font-weight: 300; }
+
+    /* ── Card ── */
+    .card {
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 40px 36px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.4);
+    }
+
+    /* ── Services strip ── */
+    .services-strip {
+      display: flex; justify-content: center; gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+    .svc-pill {
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: 0.04em;
+    }
+    .svc-pill .icon { font-size: 13px; }
+
+    /* ── Form ── */
+    .form-group { margin-bottom: 20px; }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    input[type="text"], input[type="email"] {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-family: 'Sora', sans-serif;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    input[type="text"]:focus, input[type="email"]:focus {
+      border-color: var(--aws-orange);
+      background: rgba(255,153,0,0.06);
+    }
+    input::placeholder { color: rgba(255,255,255,0.25); }
+
+    /* ── Drop zone ── */
+    .drop-zone {
+      border: 2px dashed rgba(255,255,255,0.15);
+      border-radius: 16px;
+      padding: 36px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s;
+      position: relative;
+      background: rgba(255,255,255,0.03);
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--aws-orange);
+      background: rgba(255,153,0,0.06);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0;
+      opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .drop-icon { font-size: 40px; margin-bottom: 12px; display: block; }
+    .drop-zone h3 { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+    .drop-zone p  { font-size: 12px; color: rgba(255,255,255,0.35); }
+    .file-types   { font-size: 11px; color: rgba(255,255,255,0.25); margin-top: 8px; font-family: 'JetBrains Mono', monospace; }
+
+    /* ── File selected preview ── */
+    .file-preview {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      background: rgba(0,179,134,0.1);
+      border: 1px solid rgba(0,179,134,0.3);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-top: 12px;
+    }
+    .file-preview.show { display: flex; }
+    .file-preview .file-icon { font-size: 24px; }
+    .file-preview .file-info { flex: 1; }
+    .file-preview .file-name { font-size: 13px; font-weight: 600; color: #fff; word-break: break-all; }
+    .file-preview .file-size { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+    .file-preview .remove-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 18px; color: rgba(255,255,255,0.3);
+      transition: color 0.2s; padding: 4px;
+    }
+    .file-preview .remove-btn:hover { color: var(--error); }
+
+    /* ── Submit button ── */
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--aws-orange) 0%, #e68000 100%);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: 'Sora', sans-serif;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+      box-shadow: 0 8px 24px rgba(255,153,0,0.3);
+      letter-spacing: 0.02em;
+    }
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(255,153,0,0.45);
+    }
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* ── Progress bar ── */
+    .progress-wrap {
+      display: none;
+      margin-top: 16px;
+    }
+    .progress-wrap.show { display: block; }
+    .progress-label {
+      display: flex; justify-content: space-between;
+      font-size: 12px; color: rgba(255,255,255,0.5);
+      margin-bottom: 6px;
+    }
+    .progress-bar-bg {
+      background: rgba(255,255,255,0.08);
+      border-radius: 999px; height: 6px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--aws-orange), #ffcc00);
+      border-radius: 999px;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    /* ── Alert messages ── */
+    .alert {
+      display: none;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-top: 16px;
+      font-size: 14px;
+      font-weight: 500;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { opacity:0; transform:translateY(8px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .alert.show { display: flex; align-items: flex-start; gap: 10px; }
+    .alert-success {
+      background: rgba(0,179,134,0.12);
+      border: 1px solid rgba(0,179,134,0.3);
+      color: #00d4a0;
+    }
+    .alert-error {
+      background: rgba(229,57,53,0.1);
+      border: 1px solid rgba(229,57,53,0.25);
+      color: #ff6b6b;
+    }
+    .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .alert-body .alert-title { font-weight: 700; margin-bottom: 3px; }
+    .alert-body .alert-detail { font-size: 12px; opacity: 0.7; margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+
+    /* ── Footer info ── */
+    .footer-note {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.2);
+      line-height: 1.8;
+    }
+    .footer-note a { color: rgba(255,153,0,0.5); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+
+    <!-- Brand -->
+    <div class="brand">
+      <div class="brand-badge">
+        <div class="dot"></div>
+        <span>AWS Student Project</span>
+      </div>
+      <h1>Secure <em>File Upload</em><br>Portal</h1>
+      <p>Upload files directly to Amazon S3 via EC2 &amp; Flask</p>
+    </div>
+
+    <!-- Card -->
+    <div class="card">
+
+      <!-- Services -->
+      <div class="services-strip">
+        <div class="svc-pill"><span class="icon">⚙️</span> EC2</div>
+        <div class="svc-pill"><span class="icon">🪣</span> S3</div>
+        <div class="svc-pill"><span class="icon">🗄️</span> DynamoDB</div>
+        <div class="svc-pill"><span class="icon">📧</span> SES</div>
+        <div class="svc-pill"><span class="icon">🔐</span> IAM</div>
+      </div>
+
+      <form id="uploadForm">
+
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" name="name" placeholder="e.g. Kastro Kiran" required />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" placeholder="e.g. kastro@example.com" required />
+        </div>
+
+        <div class="form-group">
+          <label>Upload File</label>
+          <div class="drop-zone" id="dropZone">
+            <input type="file" id="fileInput" name="file" accept="image/*,.pdf,.txt,.docx,.xlsx,.zip" />
+            <span class="drop-icon">☁️</span>
+            <h3>Drag &amp; drop your file here</h3>
+            <p>or click to browse from your computer</p>
+            <div class="file-types">PNG · JPG · PDF · DOCX · XLSX · ZIP · TXT</div>
+          </div>
+          <div class="file-preview" id="filePreview">
+            <span class="file-icon" id="fileEmoji">📄</span>
+            <div class="file-info">
+              <div class="file-name" id="fileName">filename.pdf</div>
+              <div class="file-size" id="fileSize">0 KB</div>
+            </div>
+            <button type="button" class="remove-btn" id="removeFile">✕</button>
+          </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-wrap" id="progressWrap">
+          <div class="progress-label">
+            <span id="progressLabel">Uploading to S3...</span>
+            <span id="progressPct">0%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progressFill"></div>
+          </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="alert alert-success" id="successAlert">
+          <span class="alert-icon">✅</span>
+          <div class="alert-body">
+            <div class="alert-title">Upload Successful!</div>
+            <div class="alert-detail" id="successDetail"></div>
+          </div>
+        </div>
+        <div class="alert alert-error" id="errorAlert">
+          <span class="alert-icon">❌</span>
+          <div class="alert-body">
+            <div class="alert-title">Upload Failed</div>
+            <div class="alert-detail" id="errorDetail"></div>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">
+          🚀 &nbsp; Upload to AWS S3
+        </button>
+
+      </form>
+    </div>
+
+    <div class="footer-note">
+      Files are encrypted with AES-256 &bull; Stored securely on Amazon S3<br>
+      Metadata saved in DynamoDB &bull; Confirmation sent via Amazon SES<br>
+      <br>
+      Built for <a href="#">AWS Batch Students</a> &bull; Powered by Flask on Amazon EC2
+    </div>
+
+  </div>
+
+  <script>
+    const dropZone    = document.getElementById('dropZone');
+    const fileInput   = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
+    const fileName    = document.getElementById('fileName');
+    const fileSize    = document.getElementById('fileSize');
+    const fileEmoji   = document.getElementById('fileEmoji');
+    const removeFile  = document.getElementById('removeFile');
+    const uploadForm  = document.getElementById('uploadForm');
+    const submitBtn   = document.getElementById('submitBtn');
+    const progressWrap= document.getElementById('progressWrap');
+    const progressFill= document.getElementById('progressFill');
+    const progressPct = document.getElementById('progressPct');
+    const progressLbl = document.getElementById('progressLabel');
+    const successAlert= document.getElementById('successAlert');
+    const errorAlert  = document.getElementById('errorAlert');
+    const successDetail= document.getElementById('successDetail');
+    const errorDetail = document.getElementById('errorDetail');
+
+    const emojiMap = {
+      image: '🖼️', pdf: '📑', doc: '📝', excel: '📊', zip: '🗜️', default: '📄'
+    };
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    function getEmoji(name) {
+      const ext = name.split('.').pop().toLowerCase();
+      if (['png','jpg','jpeg','gif','webp'].includes(ext)) return emojiMap.image;
+      if (ext === 'pdf') return emojiMap.pdf;
+      if (['doc','docx','txt'].includes(ext)) return emojiMap.doc;
+      if (['xls','xlsx','csv'].includes(ext)) return emojiMap.excel;
+      if (['zip','tar','gz'].includes(ext)) return emojiMap.zip;
+      return emojiMap.default;
+    }
+
+    function showFile(file) {
+      fileName.textContent  = file.name;
+      fileSize.textContent  = formatSize(file.size);
+      fileEmoji.textContent = getEmoji(file.name);
+      filePreview.classList.add('show');
+      dropZone.style.display = 'none';
+    }
+
+    function clearFile() {
+      fileInput.value       = '';
+      filePreview.classList.remove('show');
+      dropZone.style.display = '';
+    }
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) showFile(fileInput.files[0]);
+    });
+    removeFile.addEventListener('click', clearFile);
+
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault(); dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) { const dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files; showFile(file); }
+    });
+
+    function hideAlerts() {
+      successAlert.classList.remove('show');
+      errorAlert.classList.remove('show');
+    }
+
+    function animateProgress(cb) {
+      progressWrap.classList.add('show');
+      let pct = 0;
+      const steps = ['Preparing upload...', 'Uploading to S3...', 'Saving to DynamoDB...', 'Sending email...'];
+      let stepIdx = 0;
+      progressLbl.textContent = steps[stepIdx];
+      const iv = setInterval(() => {
+        pct += Math.random() * 15;
+        if (pct >= 90) { pct = 90; clearInterval(iv); }
+        progressFill.style.width = pct + '%';
+        progressPct.textContent  = Math.round(pct) + '%';
+        stepIdx = Math.min(Math.floor(pct / 25), steps.length - 1);
+        progressLbl.textContent  = steps[stepIdx];
+      }, 300);
+      return () => {
+        clearInterval(iv);
+        progressFill.style.width = '100%';
+        progressPct.textContent  = '100%';
+        progressLbl.textContent  = 'Done!';
+        setTimeout(() => { progressWrap.classList.remove('show'); progressFill.style.width = '0%'; cb && cb(); }, 600);
+      };
+    }
+
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAlerts();
+
+      const name  = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      if (!fileInput.files[0]) {
+        errorDetail.textContent = 'Please select a file before uploading.';
+        errorAlert.classList.add('show'); return;
+      }
+
+      submitBtn.disabled  = true;
+      submitBtn.innerHTML = '⏳ &nbsp; Uploading...';
+
+      const finish = animateProgress();
+
+      const formData = new FormData();
+      formData.append('name',  name);
+      formData.append('email', email);
+      formData.append('file',  fileInput.files[0]);
+
+      try {
+        const res  = await fetch('/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        finish(() => {
+          if (data.success) {
+            successDetail.textContent = `Record ID: ${data.record_id} | File: ${data.filename} | Size: ${data.size_kb} KB`;
+            successAlert.classList.add('show');
+            clearFile();
+            uploadForm.reset();
+          } else {
+            errorDetail.textContent = data.message;
+            errorAlert.classList.add('show');
+          }
+        });
+      } catch (err) {
+        finish(() => {
+          errorDetail.textContent = 'Network error. Check your connection.';
+          errorAlert.classList.add('show');
+        });
+      } finally {
+        submitBtn.disabled  = false;
+        submitBtn.innerHTML = '🚀 &nbsp; Upload to AWS S3';
+      }
+    });
+  </script>
+</body>
+</html>
