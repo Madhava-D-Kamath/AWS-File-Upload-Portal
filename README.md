@@ -1,8 +1,23 @@
-# AWS File Upload Portal
+# ☁️ AWS File Upload Portal
 
-A cloud-based file upload application built using Python Flask and deployed on Amazon EC2. Uploaded files are stored in Amazon S3, file metadata is saved in Amazon DynamoDB, and users receive confirmation emails through Amazon SES.
+A cloud-based file upload application built using **Python Flask** and deployed on **Amazon EC2**. Uploaded files are stored in Amazon S3, file metadata is saved in Amazon DynamoDB, and users receive confirmation emails through Amazon SES.
 
-## 1. Project Architecture
+## 🌐 Live Application
+
+| Detail | Value |
+|---|---|
+| Application Name | AWS File Upload Portal |
+| EC2 Public IP | `3.25.93.135` |
+| Application URL | http://3.25.93.135 |
+| Hosting Platform | Amazon EC2 |
+| Operating System | Amazon Linux 2023 |
+| Web Server | Nginx |
+| Backend | Flask + Gunicorn |
+| Protocol | HTTP |
+
+> **Note:** `3.25.93.135` is the last recorded EC2 public IP. Verify that it is still assigned to your instance. If the instance is stopped and restarted, its public IP may change unless an Elastic IP is configured. HTTPS is not configured yet.
+
+## 1. 🏗️ Project Architecture
 
 ```text
                  User Browser
@@ -30,7 +45,7 @@ A cloud-based file upload application built using Python Flask and deployed on A
        Storage    Storage     Notification
 ```
 
-## 2. AWS Infrastructure Details
+## 2. ☁️ AWS Infrastructure Details
 
 | Component | Actual Configuration |
 |---|---|
@@ -46,7 +61,7 @@ A cloud-based file upload application built using Python Flask and deployed on A
 | Application Port | 5000 (localhost) |
 | Public Web Port | 80 (HTTP) |
 
-## 3. Amazon S3 Configuration
+## 3. 🪣 Amazon S3 Configuration
 
 | Setting | Actual Value |
 |---|---|
@@ -68,7 +83,7 @@ uploads/
         63c5383b_Smart_Meter.pdf
 ```
 
-## 4. Amazon DynamoDB Configuration
+## 4. 🗄️ Amazon DynamoDB Configuration
 
 | Setting | Actual Value |
 |---|---|
@@ -89,7 +104,7 @@ The table stores upload information, including:
 - File size
 - Upload timestamp
 
-## 5. Amazon SES Configuration
+## 5. 📧 Amazon SES Configuration
 
 Amazon Simple Email Service is integrated to send upload confirmation emails.
 
@@ -100,9 +115,9 @@ Amazon Simple Email Service is integrated to send upload confirmation emails.
 | Verified Sender | `kamathmadhava81@gmail.com` |
 | Account Status | Sandbox |
 
-**Note:** The SES account is in Sandbox mode. Email sending is therefore restricted to verified recipient addresses. Production access is required to send emails to arbitrary recipients.
+**Note:** The SES account is in Sandbox mode. Email sending is restricted to verified recipient addresses. Production access is required to send emails to arbitrary recipients.
 
-## 6. IAM Configuration
+## 6. 🔐 IAM Configuration
 
 An IAM role is attached to the EC2 instance.
 
@@ -119,7 +134,7 @@ The policy grants the application permissions to:
 
 The application uses the EC2 IAM role to access AWS services without storing AWS access keys in the project.
 
-## 7. EC2 Application Configuration
+## 7. 💻 EC2 Application Configuration
 
 The application is deployed at:
 
@@ -127,7 +142,7 @@ The application is deployed at:
 /home/ec2-user/AWS-File-Upload/AWS-File-Upload-App-main
 ```
 
-Main project structure:
+### Project Structure
 
 ```text
 AWS-File-Upload-App-main/
@@ -142,16 +157,17 @@ AWS-File-Upload-App-main/
 ├── templates/
 │   └── index.html
 │
-├── .env
 ├── .gitignore
-└── venv/
+│
+├── .env       (local configuration - not committed)
+└── venv/      (Python virtual environment - not committed)
 ```
 
-**Important:** `.env` and `venv/` are excluded from GitHub using `.gitignore`. Never upload actual environment configuration or credentials.
+**Security:** `.env` and `venv/` are excluded from GitHub using `.gitignore`. Never upload actual environment configuration, AWS credentials or personal access tokens.
 
 ### Environment Configuration
 
-The application uses these environment variables:
+The application uses the following environment variables:
 
 ```env
 AWS_REGION=ap-southeast-2
@@ -162,7 +178,7 @@ SES_SENDER_EMAIL=kamathmadhava81@gmail.com
 
 These values are configured locally on the EC2 instance.
 
-## 8. Application Server
+## 8. ⚙️ Application Server
 
 Gunicorn runs the Flask application using:
 
@@ -178,7 +194,7 @@ sudo systemctl restart flask-app
 sudo systemctl enable flask-app
 ```
 
-## 9. Nginx Configuration
+## 9. 🌐 Nginx Configuration
 
 Nginx acts as a reverse proxy and forwards incoming HTTP requests to Gunicorn.
 
@@ -212,7 +228,7 @@ sudo systemctl restart nginx
 sudo nginx -t
 ```
 
-## 10. Security Group Configuration
+## 10. 🛡️ Security Group Configuration
 
 | Type | Protocol | Port | Access |
 |---|---|---|---|
@@ -221,7 +237,7 @@ sudo nginx -t
 
 The S3 bucket remains private. Access to AWS services is controlled through IAM permissions.
 
-## 11. Application Workflow
+## 11. 🔄 Application Workflow
 
 1. A user opens the file upload portal in a web browser.
 2. The user enters their name and email address.
@@ -232,7 +248,7 @@ The S3 bucket remains private. Access to AWS services is controlled through IAM 
 7. Amazon SES sends a confirmation email.
 8. The user receives an upload confirmation.
 
-## 12. Deployment Verification
+## 12. ✅ Deployment Verification
 
 The following components were tested during deployment:
 
@@ -249,13 +265,13 @@ The following components were tested during deployment:
 
 The application returned HTTP 200 when tested locally through Nginx.
 
-## 13. GitHub Repository
+## 13. 📂 GitHub Repository
 
-Source code:
+**Source Code Repository:**
 
 https://github.com/Madhava-D-Kamath/AWS-File-Upload-Portal
 
-## 14. Technologies Used
+## 14. 🛠️ Technologies Used
 
 - Python
 - Flask
@@ -269,7 +285,7 @@ https://github.com/Madhava-D-Kamath/AWS-File-Upload-Portal
 - Linux
 - Git and GitHub
 
-## 15. Future Improvements
+## 15. 🚀 Future Improvements
 
 - Configure HTTPS using SSL/TLS.
 - Connect a custom domain.
@@ -281,7 +297,14 @@ https://github.com/Madhava-D-Kamath/AWS-File-Upload-Portal
 
 ---
 
-**Project:** AWS File Upload Portal  
-**Deployment Platform:** Amazon Web Services  
-**Application:** Python Flask + Nginx + Gunicorn  
+## Project Information
+
+**Project:** AWS File Upload Portal
+
+**Deployment Platform:** Amazon Web Services
+
+**Application:** Python Flask + Nginx + Gunicorn
+
 **Region:** Asia Pacific (Sydney) — `ap-southeast-2`
+
+**GitHub:** Madhava-D-Kamath
